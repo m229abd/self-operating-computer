@@ -26,6 +26,7 @@ from operate.utils.label import (
 from operate.utils.ocr import get_text_coordinates, get_text_element
 from operate.utils.screenshot import capture_screen_with_cursor
 from operate.utils.style import ANSI_BRIGHT_MAGENTA, ANSI_GREEN, ANSI_RED, ANSI_RESET
+from litellm import completion
 
 # Load configuration
 config = Config()
@@ -46,6 +47,12 @@ async def get_next_action(model, messages, objective, session_id):
     if model == "o1-with-ocr":
         operation = await call_o1_with_ocr(messages, objective, model)
         return operation, None
+    if model.startswith("ollama-ocr-"):
+        operation = await call_ollama_with_ocr(messages, objective, model[11:])
+        return operation, None
+    if model.startswith("ollama-vl-"):
+        operation = await call_ollama(messages, objective, model[10:])
+        return operation, None
     if model == "agent-1":
         return "coming soon"
     if model == "gemini-pro-vision":
@@ -53,8 +60,120 @@ async def get_next_action(model, messages, objective, session_id):
     if model == "claude-3":
         operation = await call_claude_3_with_ocr(messages, objective, model)
         return operation, None
-    operation = call_ollama(model, messages)
-    return operation, None
+    raise ModelNotRecognizedException(model)
+
+
+async def call_ollama_with_ocr(messages, objective, model):
+    if config.verbose:
+        print("[call_ollama_with_ocr]")
+
+    # Construct the path to the file within the package
+    try:
+        time.sleep(1)
+
+        confirm_system_prompt(messages, objective, model)
+        screenshots_dir = "screenshots"
+        if not os.path.exists(screenshots_dir):
+            os.makedirs(screenshots_dir)
+
+        screenshot_filename = os.path.join(screenshots_dir, "screenshot.png")
+        # Call the function to capture the screen with the cursor
+        capture_screen_with_cursor(screenshot_filename)
+
+        with open(screenshot_filename, "rb") as img_file:
+            img_base64 = base64.b64encode(img_file.read()).decode("utf-8")
+
+        if len(messages) == 1:
+            user_prompt = get_user_first_message_prompt()
+        else:
+            user_prompt = get_user_prompt()
+
+        vision_message = {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": user_prompt},
+                {
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/jpeg;base64,{img_base64}"},
+                },
+            ],
+        }
+        messages.append(vision_message)
+
+        response = completion(
+            model=model, 
+            messages=messages, 
+            api_base="http://localhost:11434"
+        )
+
+        content = response.choices[0].message.content
+
+        content = clean_json(content)
+
+        # used later for the messages
+        content_str = content
+
+        content = json.loads(content)
+
+        processed_content = []
+
+        for operation in content:
+            if operation.get("operation") == "click":
+                text_to_click = operation.get("text")
+                if config.verbose:
+                    print(
+                        "[call_ollama_with_ocr][click] text_to_click",
+                        text_to_click,
+                    )
+                # Initialize EasyOCR Reader
+                reader = easyocr.Reader(["en"])
+
+                # Read the screenshot
+                result = reader.readtext(screenshot_filename)
+
+                text_element_index = get_text_element(
+                    result, text_to_click, screenshot_filename
+                )
+                coordinates = get_text_coordinates(
+                    result, text_element_index, screenshot_filename
+                )
+
+                # add `coordinates`` to `content`
+                operation["x"] = coordinates["x"]
+                operation["y"] = coordinates["y"]
+
+                if config.verbose:
+                    print(
+                        "[call_ollama_with_ocr][click] text_element_index",
+                        text_element_index,
+                    )
+                    print(
+                        "[call_ollama_with_ocr][click] coordinates",
+                        coordinates,
+                    )
+                    print(
+                        "[call_ollama_with_ocr][click] final operation",
+                        operation,
+                    )
+                processed_content.append(operation)
+
+            else:
+                processed_content.append(operation)
+
+        # wait to append the assistant message so that if the `processed_content` step fails we don't append a message and mess up message history
+        assistant_message = {"role": "assistant", "content": content_str}
+        messages.append(assistant_message)
+
+        return processed_content
+
+    except Exception as e:
+        print(
+            f"{ANSI_GREEN}[Self-Operating Computer]{ANSI_BRIGHT_MAGENTA}[{model}] That did not work. Trying another method {ANSI_RESET}"
+        )
+        if config.verbose:
+            print("[Self-Operating Computer][Operate] error", e)
+            traceback.print_exc()
+        return call_ollama_with_ocr(messages, objective, model)
 
 def call_gpt_4o(messages):
     if config.verbose:
