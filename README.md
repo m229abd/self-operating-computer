@@ -1,10 +1,11 @@
+ome
 <h1 align="center">Self-Operating Computer Framework</h1>
 
 <p align="center">
   <strong>A framework to enable multimodal models to operate a computer.</strong>
 </p>
 <p align="center">
-  Using the same inputs and outputs as a human operator, the model views the screen and decides on a series of mouse and keyboard actions to reach an objective. 
+  Using the same inputs and outputs as a human operator, the model views the screen and decides on a series of mouse and keyboard actions to reach an objective. Released Nov 2023, the Self-Operating Computer Framework was one of the first examples of using a multimodal model to view the screen and operate a computer.
 </p>
 
 <div align="center">
@@ -12,26 +13,17 @@
 </div>
 
 <!--
-:rotating_light: **OUTAGE NOTIFICATION: gpt-4-vision-preview**
+:rotating_light: **OUTAGE NOTIFICATION: gpt-4o**
 **This model is currently experiencing an outage so the self-operating computer may not work as expected.**
 -->
 
 
 ## Key Features
 - **Compatibility**: Designed for various multimodal models.
-- **Integration**: Currently integrated with **GPT-4v, Gemini Pro Vision, Claude 3 and LLaVa.**
+- **Integration**: Currently integrated with **GPT-4o, o1, Gemini Pro Vision, Claude 3 and LLaVa.**
 - **Future Plans**: Support for additional models.
 
-## Ongoing Development
-At [HyperwriteAI](https://www.hyperwriteai.com/), we are developing Agent-1-Vision a multimodal model with more accurate click location predictions.
-
-## Agent-1-Vision Model API Access
-We will soon be offering API access to our Agent-1-Vision model.
-
-If you're interested in gaining access to this API, sign up [here](https://othersideai.typeform.com/to/FszaJ1k8?typeform-source=www.hyperwriteai.com).
-
 ## Demo
-
 https://github.com/OthersideAI/self-operating-computer/assets/42594239/9e8abc96-c76a-46fb-9b13-03678b3c67e0
 
 
@@ -45,7 +37,7 @@ pip install self-operating-computer
 ```
 operate
 ```
-3. **Enter your OpenAI Key**: If you don't have one, you can obtain an OpenAI key [here](https://platform.openai.com/account/api-keys)
+3. **Enter your OpenAI Key**: If you don't have one, you can obtain an OpenAI key [here](https://platform.openai.com/account/api-keys). If you need you change your key at a later point, run `vim .env` to open the `.env` and replace the old key. 
 
 <div align="center">
   <img src="https://github.com/OthersideAI/self-operating-computer/blob/main/readme/key.png" width="300"  style="margin: 10px;"/>
@@ -60,10 +52,17 @@ operate
 
 ## Using `operate` Modes
 
-### Multimodal Models  `-m`
-An additional model is now compatible with the Self Operating Computer Framework. Try Google's `gemini-pro-vision` by following the instructions below. 
+#### OpenAI models
 
-Start `operate` with the Gemini model
+The default model for the project is gpt-4o which you can use by simply typing `operate`. To try running OpenAI's new `o1` model, use the command below. 
+
+```
+operate -m o1-with-ocr
+```
+
+
+### Multimodal Models  `-m`
+Try Google's `gemini-pro-vision` by following the instructions below. Start `operate` with the Gemini model
 ```
 operate -m gemini-pro-vision
 ```
@@ -77,28 +76,28 @@ Use Claude 3 with Vision to see how it stacks up to GPT-4-Vision at operating a 
 operate -m claude-3
 ```
 
-#### Try LLaVa Hosted Through Ollama `-m llava`
-If you wish to experiment with the Self-Operating Computer Framework using LLaVA on your own machine, you can with Ollama!   
-*Note: Ollama currently only supports MacOS and Linux*   
+#### Try a model Hosted Through Ollama `-m llama3.2-vision`
+If you wish to experiment with the Self-Operating Computer Framework using e.g. LLaVA on your own machine, you can with Ollama!   
+*Note: Ollama currently only supports MacOS and Linux. Windows now in Preview*   
 
 First, install Ollama on your machine from https://ollama.ai/download.   
 
-Once Ollama is installed, pull the LLaVA model:
+Once Ollama is installed, pull the vision model:
 ```
-ollama pull llava
+ollama pull llama3.2-vision
 ```
 This will download the model on your machine which takes approximately 5 GB of storage.   
 
-When Ollama has finished pulling LLaVA, start the server:
+When Ollama has finished pulling llama3.2-vision, start the server:
 ```
 ollama serve
 ```
 
-That's it! Now start `operate` and select the LLaVA model:
+That's it! Now start `operate` and select the model:
 ```
-operate -m llava
+operate -m llama3.2-vision
 ```   
-**Important:** Error rates when using LLaVA are very high. This is simply intended to be a base to build off of as local multimodal models improve over time.
+**Important:** Error rates when using self-hosted models are very high. This is simply intended to be a base to build off of as local multimodal models improve over time.
 
 Learn more about Ollama at its [GitHub Repository](https://www.github.com/ollama/ollama)
 
@@ -176,5 +175,5 @@ Stay updated with the latest developments:
 - This project is compatible with Mac OS, Windows, and Linux (with X server installed).
 
 ## OpenAI Rate Limiting Note
-The ```gpt-4-vision-preview``` model is required. To unlock access to this model, your account needs to spend at least \$5 in API credits. Pre-paying for these credits will unlock access if you haven't already spent the minimum \$5.   
+The ```gpt-4o``` model is required. To unlock access to this model, your account needs to spend at least \$5 in API credits. Pre-paying for these credits will unlock access if you haven't already spent the minimum \$5.   
 Learn more **[here](https://platform.openai.com/docs/guides/rate-limits?context=tier-one)**
